@@ -55,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 			MemoStore.upsert({
 				id: generateId(),
 				code: { file, line },
-				note: { file: normalizePath(memoPath) },
+				note: { file: memoPath.replace(/^\.?\//, '') },
 				createdAt: new Date().toISOString(),
 			});
 

@@ -13,28 +13,49 @@ export async function reconcileMemos() {
         '{**/node_modules/**,**/.git/**,**/dist/**,**/build/**}'
     );
 
-
     let changed = false;
 
     for (const link of data.links) {
-        const codeCandidates = files.filter(f => f.fsPath.endsWith(path.basename(link.code.file)));
-        for (const f of codeCandidates) {
-            const rel = vscode.workspace.asRelativePath(f);
-            if (rel !== link.code.file) {
-                link.code.file = rel;
+        // --- heal code file ---
+        const codeAbs = path.join(root, link.code.file);
+        if (!fs.existsSync(codeAbs)) {
+            const basename = path.basename(link.code.file);
+            const dir = path.dirname(link.code.file);
+
+            const matches = files.filter(f =>
+                path.basename(f.fsPath) === basename &&
+                vscode.workspace.asRelativePath(f).startsWith(dir)
+            );
+
+            if (matches.length === 1) {
+                const newRel = vscode.workspace.asRelativePath(matches[0]);
+                console.log('[Code-Memo] healed code path:', link.code.file, '→', newRel);
+                link.code.file = newRel;
                 changed = true;
             }
         }
 
-        const noteCandidates = files.filter(f => f.fsPath.endsWith(path.basename(link.note.file)));
-        for (const f of noteCandidates) {
-            const rel = vscode.workspace.asRelativePath(f);
-            if (rel !== link.note.file) {
-                link.note.file = rel;
+        // --- heal note file ---
+        const noteAbs = path.join(root, link.note.file);
+        if (!fs.existsSync(noteAbs)) {
+            const basename = path.basename(link.note.file);
+            const dir = path.dirname(link.note.file);
+
+            const matches = files.filter(f =>
+                path.basename(f.fsPath) === basename &&
+                vscode.workspace.asRelativePath(f).startsWith(dir)
+            );
+
+            if (matches.length === 1) {
+                const newRel = vscode.workspace.asRelativePath(matches[0]);
+                console.log('[Code-Memo] healed note path:', link.note.file, '→', newRel);
+                link.note.file = newRel;
                 changed = true;
             }
         }
     }
 
-    if (changed) MemoStore.save(data);
+    if (changed) {
+        MemoStore.save(data);
+    }
 }

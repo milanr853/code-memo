@@ -49,12 +49,7 @@ export class MemoStore {
         const data = this.load();
         let changed = false;
 
-        console.log('[Code-Memo] updatePath called with:', oldPath, '→', newPath);
-
         for (const link of data.links) {
-            console.log('[Code-Memo] stored code.file:', link.code.file);
-            console.log('[Code-Memo] stored note.file:', link.note.file);
-
             if (link.code.file === oldPath) {
                 link.code.file = newPath;
                 changed = true;
@@ -69,18 +64,19 @@ export class MemoStore {
         return changed;
     }
 
-
+    /**
+     * Remove memos only if the *code file* is gone.
+     * Notes may be created later, so they are NOT cleaned up.
+     */
     static cleanupMissingFiles() {
         const data = this.load();
         const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!root) return;
 
-        const exists = (p: string) => fs.existsSync(path.join(root, p));
+        const codeExists = (p: string) => fs.existsSync(path.join(root, p));
 
         const before = data.links.length;
-        data.links = data.links.filter(
-            l => exists(l.code.file) && exists(l.note.file)
-        );
+        data.links = data.links.filter(l => codeExists(l.code.file));
 
         if (data.links.length !== before) this.save(data);
     }

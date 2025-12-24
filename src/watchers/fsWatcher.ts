@@ -3,19 +3,15 @@ import { reconcileMemos } from '../reconcile';
 import { debounce } from '../utils/debounce';
 
 export function registerFsWatcher(context: vscode.ExtensionContext) {
-    const config = vscode.workspace.getConfiguration('codeMemo');
-    const enabled = config.get<boolean>('autoReconcile', true);
+    const debouncedReconcile = debounce(async () => {
+        await reconcileMemos();
+    }, 1200);
 
-    if (!enabled) {
-        console.log('[Code-Memo] autoReconcile disabled by user');
-        return;
-    }
-
-    const delay = config.get<number>('reconcileDelay', 800);
-
-    const debouncedReconcile = debounce(() => {
-        reconcileMemos().catch(console.error);
-    }, delay);
+    const trigger = () => {
+        debouncedReconcile();
+        // retry once after filesystem stabilizes
+        setTimeout(() => debouncedReconcile(), 1500);
+    };
 
     const watcher = vscode.workspace.createFileSystemWatcher(
         '**/*',
@@ -24,8 +20,8 @@ export function registerFsWatcher(context: vscode.ExtensionContext) {
         false
     );
 
-    watcher.onDidCreate(debouncedReconcile);
-    watcher.onDidDelete(debouncedReconcile);
+    watcher.onDidCreate(trigger);
+    watcher.onDidDelete(trigger);
     watcher.onDidChange(debouncedReconcile);
 
     context.subscriptions.push(watcher);
