@@ -98,16 +98,32 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 
 		vscode.commands.registerCommand('codeMemo.removeMemo', async () => {
+			const editor = vscode.window.activeTextEditor;
 			const data = MemoStore.load();
-			if (data.links.length === 0) return;
+
+			if (data.links.length === 0) {
+				vscode.window.showInformationMessage('No memo links exist.');
+				return;
+			}
+
+			const activeFile = editor ? normalizePath(editor.document.uri) : null;
+
+			const candidates = activeFile
+				? data.links.filter(l => l.code.file === activeFile)
+				: data.links;
+
+			if (candidates.length === 0) {
+				vscode.window.showInformationMessage('No memos exist for this file.');
+				return;
+			}
 
 			const pick = await vscode.window.showQuickPick(
-				data.links.map(l => ({
+				candidates.map(l => ({
 					label: path.basename(l.note.file),
 					description: `${l.code.file}:${l.code.line}`,
 					link: l,
 				})),
-				{ placeHolder: 'Select memo to remove' }
+				{ placeHolder: activeFile ? 'Select memo to remove from this file' : 'Select memo to remove' }
 			);
 
 			if (!pick) return;
