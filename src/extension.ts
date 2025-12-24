@@ -6,12 +6,26 @@ import { generateId } from './utils/id';
 import { registerRenameWatcher } from './watchers/renameWatcher';
 import { normalizePath } from './utils/paths';
 import { reconcileMemos } from './reconcile';
+import { registerFsWatcher } from './watchers/fsWatcher';
+
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('[Code-Memo] activated');
 
 	// Heal links on startup (handles renames done outside VS Code)
 	reconcileMemos().catch(console.error);
+
+	registerFsWatcher(context);
+
+	vscode.window.onDidChangeWindowState(e => {
+		if (e.focused) {
+			reconcileMemos().catch(console.error);
+		}
+	});
+
+	vscode.workspace.onDidOpenTextDocument(() => {
+		reconcileMemos().catch(console.error);
+	});
 
 
 	// Remove links pointing to missing files
