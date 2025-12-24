@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
 import { MemoStore } from '../data/memoStore';
 import { normalizePath } from '../utils/paths';
 
@@ -9,31 +8,30 @@ export class MemoCodeLensProvider implements vscode.CodeLensProvider {
         const lenses: vscode.CodeLens[] = [];
         const links = MemoStore.load().links;
         const docPath = normalizePath(document.uri);
-        const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+        const grouped = new Map<number, typeof links>();
 
         for (const link of links) {
             if (normalizePath(link.code.file) === docPath) {
-                const line = link.code.line - 1;
-                const range = new vscode.Range(line, 0, line, 0);
-                const label = path.basename(link.note.file);
-
-                let preview = '';
-                if (root) {
-                    const abs = path.join(root, link.note.file);
-                    if (fs.existsSync(abs)) {
-                        preview = fs.readFileSync(abs, 'utf8').split('\n').slice(0, 6).join('\n');
-                    }
-                }
-
-                lenses.push(
-                    new vscode.CodeLens(range, {
-                        title: `$(note) ${label}`,
-                        tooltip: preview ? `Memo preview:\n${preview}` : 'Open linked memo',
-                        command: 'codeMemo.openMemo',
-                        arguments: [link.note.file],
-                    })
-                );
+                const arr = grouped.get(link.code.line) || [];
+                arr.push(link);
+                grouped.set(link.code.line, arr);
             }
+        }
+
+        for (const [line, group] of grouped) {
+            const range = new vscode.Range(line - 1, 0, line - 1, 0);
+            const names = group.map(l => path.basename(l.note.file));
+            const title = `Referred by: ${names.join(', ')}`;
+
+            lenses.push(
+                new vscode.CodeLens(range, {
+                    title,
+                    tooltip: 'Click to open memo',
+                    command: 'codeMemo.openMemoPicker',
+                    arguments: [docPath, line],
+                })
+            );
         }
 
         return lenses;

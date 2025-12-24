@@ -37,6 +37,10 @@
       {
         "command": "codeMemo.openMemo",
         "title": "Code-Memo: Open Memo"
+      },
+      {
+        "command": "codeMemo.removeMemo",
+        "title": "Code-Memo: Remove Memo Link"
       }
     ],
     "views": {

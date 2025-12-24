@@ -63,6 +63,13 @@ export class MemoStore {
         if (changed) this.save(data);
         return changed;
     }
+
+    static remove(link: MemoLink) {
+        const data = this.load();
+        data.links = data.links.filter(l => l.id !== link.id);
+        this.save(data);
+    }
+
     /**
      * Remove memos only if the *code file* is gone.
      * Notes may be created later, so they are NOT cleaned up.
