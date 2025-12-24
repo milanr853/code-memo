@@ -1,15 +1,17 @@
 import * as vscode from 'vscode';
 import { MemoStore } from '../data/memoStore';
+import { normalizePath } from '../utils/paths';
 
 export class MemoCodeLensProvider implements vscode.CodeLensProvider {
-    onDidChangeCodeLenses?: vscode.Event<void> | undefined;
-
     provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
         const lenses: vscode.CodeLens[] = [];
         const links = MemoStore.load().links;
+        const docPath = normalizePath(document.uri);
+
+        console.log('[Code-Memo] scanning', docPath);
 
         for (const link of links) {
-            if (document.uri.fsPath === link.code.file) {
+            if (docPath === link.code.file) {
                 const line = link.code.line - 1;
                 const range = new vscode.Range(line, 0, line, 0);
 

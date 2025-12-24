@@ -14,40 +14,74 @@ export class MemoStore {
 
     static load(): MemoFile {
         const memoPath = this.getMemoPath();
-        if (!memoPath) return { version: '1.0', links: [] };
-
-        if (!fs.existsSync(memoPath)) {
-            const initial: MemoFile = { version: '1.0', links: [] };
-            fs.mkdirSync(path.dirname(memoPath), { recursive: true });
-            fs.writeFileSync(memoPath, JSON.stringify(initial, null, 2));
-            return initial;
+        if (!memoPath || !fs.existsSync(memoPath)) {
+            return { version: '1.0', links: [] };
         }
 
-        return JSON.parse(fs.readFileSync(memoPath, 'utf-8'));
+        try {
+            const raw = fs.readFileSync(memoPath, 'utf-8').trim();
+            if (!raw) return { version: '1.0', links: [] };
+            return JSON.parse(raw);
+        } catch {
+            return { version: '1.0', links: [] };
+        }
     }
 
     static save(data: MemoFile) {
         const memoPath = this.getMemoPath();
         if (!memoPath) return;
+        fs.mkdirSync(path.dirname(memoPath), { recursive: true });
         fs.writeFileSync(memoPath, JSON.stringify(data, null, 2));
     }
 
-    static add(link: MemoLink) {
+    static upsert(link: MemoLink) {
         const data = this.load();
+
+        data.links = data.links.filter(
+            l => !(l.code.file === link.code.file && l.code.line === link.code.line)
+        );
+
         data.links.push(link);
         this.save(data);
     }
 
-    static remove(id: string) {
+    static updatePath(oldPath: string, newPath: string): boolean {
         const data = this.load();
-        data.links = data.links.filter(l => l.id !== id);
-        this.save(data);
+        let changed = false;
+
+        console.log('[Code-Memo] updatePath called with:', oldPath, '→', newPath);
+
+        for (const link of data.links) {
+            console.log('[Code-Memo] stored code.file:', link.code.file);
+            console.log('[Code-Memo] stored note.file:', link.note.file);
+
+            if (link.code.file === oldPath) {
+                link.code.file = newPath;
+                changed = true;
+            }
+            if (link.note.file === oldPath) {
+                link.note.file = newPath;
+                changed = true;
+            }
+        }
+
+        if (changed) this.save(data);
+        return changed;
     }
 
-    static findByCode(file: string, line: number): MemoLink[] {
+
+    static cleanupMissingFiles() {
         const data = this.load();
-        return data.links.filter(
-            l => l.code.file === file && l.code.line === line
+        const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!root) return;
+
+        const exists = (p: string) => fs.existsSync(path.join(root, p));
+
+        const before = data.links.length;
+        data.links = data.links.filter(
+            l => exists(l.code.file) && exists(l.note.file)
         );
+
+        if (data.links.length !== before) this.save(data);
     }
 }
