@@ -7,32 +7,26 @@ import { registerRenameWatcher } from './watchers/renameWatcher';
 import { normalizePath } from './utils/paths';
 import { reconcileMemos } from './reconcile';
 import { registerFsWatcher } from './watchers/fsWatcher';
-
+import { MemoTreeProvider } from './views/memoTree';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('[Code-Memo] activated');
 
-	// Heal links on startup (handles renames done outside VS Code)
 	reconcileMemos().catch(console.error);
-
 	registerFsWatcher(context);
 
 	vscode.window.onDidChangeWindowState(e => {
-		if (e.focused) {
-			reconcileMemos().catch(console.error);
-		}
+		if (e.focused) reconcileMemos().catch(console.error);
 	});
 
 	vscode.workspace.onDidOpenTextDocument(() => {
 		reconcileMemos().catch(console.error);
 	});
 
-
-	// Remove links pointing to missing files
 	MemoStore.cleanupMissingFiles();
-
-	// Listen for in-editor renames
 	registerRenameWatcher(context);
+
+	vscode.window.registerTreeDataProvider('codeMemoView', new MemoTreeProvider());
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('codeMemo.createMemo', async () => {
@@ -42,16 +36,26 @@ export function activate(context: vscode.ExtensionContext) {
 			const file = normalizePath(editor.document.uri);
 			const line = editor.selection.active.line + 1;
 
-			const note = await vscode.window.showInputBox({
-				prompt: 'Enter path to memo file (e.g. docs/token.md)',
+			const data = MemoStore.load();
+			const picks = data.links.map(l => l.note.file);
+			const unique = [...new Set(picks), 'Create new memo...'];
+
+			let memoPath = await vscode.window.showQuickPick(unique, {
+				placeHolder: 'Select or create a memo',
 			});
 
-			if (!note) return;
+			if (!memoPath || memoPath === 'Create new memo...') {
+				memoPath = await vscode.window.showInputBox({
+					prompt: 'Enter new memo path (e.g. docs/new.md)',
+				});
+			}
+
+			if (!memoPath) return;
 
 			MemoStore.upsert({
 				id: generateId(),
 				code: { file, line },
-				note: { file: normalizePath(note) },
+				note: { file: normalizePath(memoPath) },
 				createdAt: new Date().toISOString(),
 			});
 
