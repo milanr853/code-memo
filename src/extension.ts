@@ -61,11 +61,18 @@ export function activate(context: vscode.ExtensionContext) {
 			const abs = path.join(root, rel);
 			const hash = hashFile(abs);
 
+			const normalizedMemo = normalizePath(memoPath);
+
+			// ❌ Prevent self-link
+			if (normalizedMemo === file) {
+				vscode.window.showErrorMessage('A file cannot be linked to itself.');
+				return;
+			}
 			MemoStore.upsert({
 				id: generateId(),
 				code: { file, line },
 				note: {
-					file: rel,
+					file: normalizedMemo,
 					hash
 				},
 				createdAt: new Date().toISOString(),

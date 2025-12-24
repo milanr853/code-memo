@@ -2,36 +2,57 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { MemoStore } from './data/memoStore';
-import { hashFile } from './utils/hash';
 
 export async function reconcileMemos() {
     const data = MemoStore.load();
     const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-    if (!root) return;
+    if (!root || data.links.length === 0) return;
 
     const files = await vscode.workspace.findFiles(
         '**/*',
-        '{**/node_modules/**,**/.git/**,**/dist/**,**/build/**,**/.vscode/**}'
+        '{** /node_modules/ **,** /.git/ **,** /dist/ **,** /build/ **,** /.vscode/ **} '
     );
 
     let changed = false;
+    const stillValid = [];
 
     for (const link of data.links) {
-        const abs = path.join(root, link.note.file);
+        let valid = true;
 
-        if (!fs.existsSync(abs) && link.note.hash) {
-            for (const f of files) {
-                const h = hashFile(f.fsPath);
-                if (h === link.note.hash) {
-                    const rel = vscode.workspace.asRelativePath(f);
-                    console.log('[Code-Memo] healed by hash:', link.note.file, '→', rel);
-                    link.note.file = rel;
-                    changed = true;
-                    break;
-                }
+        // ---- CODE FILE ----
+        let codeAbs = path.join(root, link.code.file);
+        if (!fs.existsSync(codeAbs)) {
+            const basename = path.basename(link.code.file);
+            const matches = files.filter(f => path.basename(f.fsPath) === basename);
+
+            if (matches.length === 1) {
+                link.code.file = vscode.workspace.asRelativePath(matches[0]);
+                changed = true;
+            } else {
+                valid = false;
             }
         }
+
+        // ---- NOTE FILE ----
+        let noteAbs = path.join(root, link.note.file);
+        if (!fs.existsSync(noteAbs)) {
+            const basename = path.basename(link.note.file);
+            const matches = files.filter(f => path.basename(f.fsPath) === basename);
+
+            if (matches.length === 1) {
+                link.note.file = vscode.workspace.asRelativePath(matches[0]);
+                changed = true;
+            } else {
+                valid = false;
+            }
+        }
+
+        if (valid) stillValid.push(link);
+        else changed = true;
     }
 
-    if (changed) MemoStore.save(data);
+    if (changed) {
+        data.links = stillValid;
+        MemoStore.save(data);
+    }
 }
