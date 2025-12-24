@@ -45,6 +45,10 @@
       {
         "command": "codeMemo.removeMemo",
         "title": "Code-Memo: Remove Memo Link"
+      },
+      {
+        "command": "codeMemo.showHealth",
+        "title": "Code-Memo: Show Health"
       }
     ],
     "views": {

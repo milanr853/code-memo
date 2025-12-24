@@ -11,6 +11,7 @@ import { MemoTreeProvider } from './views/memoTree';
 import { hashFile } from './utils/hash';
 import * as path from 'path';
 import * as fs from 'fs';
+import { showHealth } from './health';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('[Code-Memo] activated');
@@ -151,9 +152,12 @@ export function activate(context: vscode.ExtensionContext) {
 		)
 	);
 
-
 	// 🔥 Force UI refresh
 	vscode.commands.executeCommand('editor.action.refreshCodeLens');
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('codeMemo.showHealth', showHealth)
+	);
 }
 
 export function deactivate() { }
