@@ -9,13 +9,19 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:codeMemo.createMemo"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "code-memo.helloWorld",
-        "title": "Hello World"
+        "command": "codeMemo.createMemo",
+        "title": "Code-Memo: Create Memo Link"
+      },
+      {
+        "command": "codeMemo.openMemo",
+        "title": "Code-Memo: Open Memo"
       }
     ]
   },
