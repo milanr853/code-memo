@@ -63,7 +63,6 @@ export class MemoStore {
         if (changed) this.save(data);
         return changed;
     }
-
     /**
      * Remove memos only if the *code file* is gone.
      * Notes may be created later, so they are NOT cleaned up.

@@ -8,6 +8,8 @@ import { normalizePath } from './utils/paths';
 import { reconcileMemos } from './reconcile';
 import { registerFsWatcher } from './watchers/fsWatcher';
 import { MemoTreeProvider } from './views/memoTree';
+import { hashFile } from './utils/hash';
+import * as path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('[Code-Memo] activated');
@@ -52,12 +54,23 @@ export function activate(context: vscode.ExtensionContext) {
 
 			if (!memoPath) return;
 
+			const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+			if (!root) return;
+
+			const rel = memoPath.replace(/^\.?\//, '');
+			const abs = path.join(root, rel);
+			const hash = hashFile(abs);
+
 			MemoStore.upsert({
 				id: generateId(),
 				code: { file, line },
-				note: { file: memoPath.replace(/^\.?\//, '') },
+				note: {
+					file: rel,
+					hash
+				},
 				createdAt: new Date().toISOString(),
 			});
+
 
 			vscode.window.showInformationMessage('Memo link created.');
 		}),

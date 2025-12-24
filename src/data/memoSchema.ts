@@ -7,6 +7,7 @@ export interface MemoLink {
     note: {
         file: string;
         section?: string;
+        hash?: string | null;
     };
     createdAt: string;
     lastVerifiedAt?: string;

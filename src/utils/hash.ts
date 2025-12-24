@@ -5,7 +5,9 @@ export function hashString(s: string) {
     return crypto.createHash('sha1').update(s).digest('hex');
 }
 
-export function hashFile(path: string) {
-    if (!fs.existsSync(path)) return null;
-    return crypto.createHash('sha1').update(fs.readFileSync(path)).digest('hex');
+export function hashFile(filePath: string): string | null {
+    if (!fs.existsSync(filePath)) return null;
+    const buf = fs.readFileSync(filePath);
+    return crypto.createHash('sha1').update(buf).digest('hex');
 }
+
