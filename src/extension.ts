@@ -10,6 +10,7 @@ import { registerFsWatcher } from './watchers/fsWatcher';
 import { MemoTreeProvider } from './views/memoTree';
 import { hashFile } from './utils/hash';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('[Code-Memo] activated');
@@ -59,6 +60,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 			const rel = memoPath.replace(/^\.?\//, '');
 			const abs = path.join(root, rel);
+
+			if (!fs.existsSync(abs)) {
+				vscode.window.showErrorMessage(`File does not exist: ${rel}`);
+				return;
+			}
 			const hash = hashFile(abs);
 
 			const normalizedMemo = normalizePath(memoPath);
