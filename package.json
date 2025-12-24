@@ -10,7 +10,11 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:codeMemo.createMemo"
+    "onStartupFinished",
+    "onWorkspaceContains:.vscode/code-memo.json",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:markdown"
   ],
   "main": "./dist/extension.js",
   "contributes": {

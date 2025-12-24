@@ -144,6 +144,10 @@ export function activate(context: vscode.ExtensionContext) {
 			new MemoCodeLensProvider()
 		)
 	);
+
+
+	// 🔥 Force UI refresh
+	vscode.commands.executeCommand('editor.action.refreshCodeLens');
 }
 
 export function deactivate() { }

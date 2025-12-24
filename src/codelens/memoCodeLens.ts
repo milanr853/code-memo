@@ -36,4 +36,11 @@ export class MemoCodeLensProvider implements vscode.CodeLensProvider {
 
         return lenses;
     }
+
+    private _onDidChange = new vscode.EventEmitter<void>();
+    onDidChangeCodeLenses = this._onDidChange.event;
+
+    refresh() {
+        this._onDidChange.fire();
+    }
 }
