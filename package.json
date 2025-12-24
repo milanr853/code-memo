@@ -14,6 +14,21 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Code Memo",
+      "properties": {
+        "codeMemo.autoReconcile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically repair memo links when files change."
+        },
+        "codeMemo.reconcileDelay": {
+          "type": "number",
+          "default": 800,
+          "description": "Debounce delay (ms) before reconciling."
+        }
+      }
+    },
     "commands": [
       {
         "command": "codeMemo.createMemo",

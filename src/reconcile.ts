@@ -8,7 +8,11 @@ export async function reconcileMemos() {
     const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (!root || data.links.length === 0) return;
 
-    const files = await vscode.workspace.findFiles('**/*', '**/node_modules/**');
+    const files = await vscode.workspace.findFiles(
+        '**/*',
+        '{**/node_modules/**,**/.git/**,**/dist/**,**/build/**}'
+    );
+
 
     let changed = false;
 
