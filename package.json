@@ -2,6 +2,7 @@
   "name": "code-memo",
   "displayName": "code_memo",
   "description": "",
+  "icon": "resources/icon.png",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.107.0"
