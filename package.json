@@ -60,6 +60,15 @@
           "name": "Code Memo"
         }
       ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "codeMemo.createMemo",
+          "when": "editorTextFocus",
+          "group": "navigation"
+        }
+      ]
     }
   },
   "scripts": {
