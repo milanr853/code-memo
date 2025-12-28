@@ -10,49 +10,43 @@ export async function reconcileMemos() {
 
     const files = await vscode.workspace.findFiles(
         '**/*',
-        '{** /node_modules/ **,** /.git/ **,** /dist/ **,** /build/ **,** /.vscode/ **} '
+        '{**/node_modules/**,**/.git/**,**/dist/**,**/build/**,**/.vscode/**}'
     );
 
     let changed = false;
-    const stillValid = [];
 
     for (const link of data.links) {
-        let valid = true;
 
         // ---- CODE FILE ----
-        let codeAbs = path.join(root, link.code.file);
+        const codeAbs = path.join(root, link.code.file);
         if (!fs.existsSync(codeAbs)) {
             const basename = path.basename(link.code.file);
             const matches = files.filter(f => path.basename(f.fsPath) === basename);
 
             if (matches.length === 1) {
-                link.code.file = vscode.workspace.asRelativePath(matches[0]);
+                const newRel = vscode.workspace.asRelativePath(matches[0]);
+                console.log('[Code-Memo] healed code path:', link.code.file, '→', newRel);
+                link.code.file = newRel;
                 changed = true;
-            } else {
-                valid = false;
             }
         }
 
         // ---- NOTE FILE ----
-        let noteAbs = path.join(root, link.note.file);
+        const noteAbs = path.join(root, link.note.file);
         if (!fs.existsSync(noteAbs)) {
             const basename = path.basename(link.note.file);
             const matches = files.filter(f => path.basename(f.fsPath) === basename);
 
             if (matches.length === 1) {
-                link.note.file = vscode.workspace.asRelativePath(matches[0]);
+                const newRel = vscode.workspace.asRelativePath(matches[0]);
+                console.log('[Code-Memo] healed note path:', link.note.file, '→', newRel);
+                link.note.file = newRel;
                 changed = true;
-            } else {
-                valid = false;
             }
         }
-
-        if (valid) stillValid.push(link);
-        else changed = true;
     }
 
     if (changed) {
-        data.links = stillValid;
         MemoStore.save(data);
     }
 }
