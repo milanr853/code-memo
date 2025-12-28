@@ -38,7 +38,7 @@ export class MemoStore {
         const data = this.load();
 
         data.links = data.links.filter(
-            l => !(l.code.file === link.code.file && l.code.line === link.code.line)
+            l => !(l.code.file === link.code.file && l.code.line === link.code.line && l.note.file === link.note.file)
         );
 
         data.links.push(link);
