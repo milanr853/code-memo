@@ -79,11 +79,30 @@ export class MemoStore {
         const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!root) return;
 
-        const codeExists = (p: string) => fs.existsSync(path.join(root, p));
+        const exists = (p: string) => fs.existsSync(path.join(root, p));
 
         const before = data.links.length;
-        data.links = data.links.filter(l => codeExists(l.code.file));
 
-        if (data.links.length !== before) this.save(data);
+        data.links = data.links.filter(l => {
+            const codeOk = exists(l.code.file);
+            const noteOk = exists(l.note.file);
+
+            if (!codeOk) {
+                console.log('[Code-Memo] Removing memo — code file missing:', l.code.file);
+            }
+
+            if (!noteOk) {
+                console.log('[Code-Memo] Removing memo — note file missing:', l.note.file);
+            }
+
+            return codeOk && noteOk;
+        });
+
+        if (data.links.length !== before) {
+            this.save(data);
+
+            // 🔥 Force CodeLens refresh after cleanup
+            vscode.commands.executeCommand('editor.action.refreshCodeLens');
+        }
     }
 }
