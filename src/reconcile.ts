@@ -8,6 +8,8 @@ export async function reconcileMemos() {
     const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (!root || data.links.length === 0) return;
 
+    console.log('[RECONCILE] start');
+
     const files = await vscode.workspace.findFiles(
         '**/*',
         '{**/node_modules/**,**/.git/**,**/dist/**,**/build/**,**/.vscode/**}'
@@ -19,6 +21,8 @@ export async function reconcileMemos() {
 
         // ---- CODE FILE ----
         const codeAbs = path.join(root, link.code.file);
+        console.log('[RECONCILE] checking', link.code.file);
+
         if (!fs.existsSync(codeAbs)) {
             const basename = path.basename(link.code.file);
             const matches = files.filter(f => path.basename(f.fsPath) === basename);
@@ -33,6 +37,8 @@ export async function reconcileMemos() {
 
         // ---- NOTE FILE ----
         const noteAbs = path.join(root, link.note.file);
+        console.log('[RECONCILE] checking', link.note.file);
+
         if (!fs.existsSync(noteAbs)) {
             const basename = path.basename(link.note.file);
             const matches = files.filter(f => path.basename(f.fsPath) === basename);
@@ -47,6 +53,9 @@ export async function reconcileMemos() {
     }
 
     if (changed) {
+        console.log('[RECONCILE] saving healed paths');
         MemoStore.save(data);
+    } else {
+        console.log('[RECONCILE] nothing to heal');
     }
 }
