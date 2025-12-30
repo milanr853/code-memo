@@ -12,12 +12,18 @@ import { hashFile } from './utils/hash';
 import * as path from 'path';
 import * as fs from 'fs';
 import { showHealth } from './health';
+import { resolveConflicts } from './conflicts/resolveConflicts';
+import { ConflictTreeProvider } from './views/conflictTree';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('[Code-Memo] activated');
 
+	MemoStore.fixIdCollisions();
 	reconcileMemos().catch(console.error);
 	registerFsWatcher(context);
+
+	resolveConflicts();
+	vscode.window.registerTreeDataProvider('codeMemoConflicts', new ConflictTreeProvider());
 
 	vscode.window.onDidChangeWindowState(e => {
 		if (e.focused) reconcileMemos().catch(console.error);

@@ -12,6 +12,27 @@ export class MemoStore {
         return path.join(root, MEMO_FILE);
     }
 
+    static fixIdCollisions() {
+        const data = this.load();
+        const seen = new Set<string>();
+        let changed = false;
+
+        for (const link of data.links) {
+            if (seen.has(link.id)) {
+                const old = link.id;
+                link.id = `memo-${Math.random().toString(36).slice(2, 10)}`;
+                console.log('[Code-Memo] Fixed ID collision:', old, '→', link.id);
+                changed = true;
+            }
+            seen.add(link.id);
+        }
+
+        if (changed) {
+            this.save(data);
+            vscode.commands.executeCommand('editor.action.refreshCodeLens');
+        }
+    }
+
     static load(): MemoFile {
         const memoPath = this.getMemoPath();
         if (!memoPath || !fs.existsSync(memoPath)) {
