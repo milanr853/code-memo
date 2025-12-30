@@ -58,6 +58,11 @@
           "icon": "",
           "id": "codeMemoView",
           "name": "Code Memo"
+        },
+        {
+          "icon": "",
+          "id": "codeMemoConflicts",
+          "name": "⚠ Code Memo Conflicts"
         }
       ]
     },
